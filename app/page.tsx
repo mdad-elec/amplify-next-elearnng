@@ -28,20 +28,22 @@ export default function Home() {
   };
 
   return (
-    <Authenticator>
-      {({ user }) => {
-        if (user) {
-          checkUserRole();
-          return <div>Loading...</div>;
-        }
-        
-        return (
-          <div className="login-container">
-            <h1>School Portal</h1>
-            <Authenticator.SignIn />
-          </div>
-        );
-      }}
-    </Authenticator>
+    <main>
+      <h1>My todos --- I have been edited</h1>
+      <button onClick={createTodo}>+ new</button>
+
+      <ul>
+        {todos.map((todo) => (
+          <li key={todo.id}>{todo.content}</li>
+        ))}
+      </ul>
+      <div>
+        🥳 App successfully hosted. Try creating a new todo.
+        <br />
+        <a href="https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/">
+          Review next steps of this tutorial.
+        </a>
+      </div>
+    </main>
   );
 }
