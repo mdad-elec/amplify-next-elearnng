@@ -1,49 +1,47 @@
+// app/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import { Auth } from "aws-amplify";
-import { useRouter } from "next/navigation";
-import { Authenticator } from "@aws-amplify/ui-react";
-import "@aws-amplify/ui-react/styles.css";
+import { Authenticator } from '@aws-amplify/ui-react';
+import { useRouter } from 'next/navigation';
+import { Amplify } from 'aws-amplify';
+import outputs from '@/amplify_outputs.json';
+import { fetchUserAttributes } from 'aws-amplify/auth';
+
+Amplify.configure(outputs);
 
 export default function Home() {
   const router = useRouter();
-  const [userGroups, setUserGroups] = useState<string[]>([]);
 
-  useEffect(() => {
-    checkUser();
-  }, []);
-
-  async function checkUser() {
+  const checkUserRole = async () => {
     try {
-      const user = await Auth.currentAuthenticatedUser();
-      const session = await Auth.currentSession();
-      const groups = session.getIdToken().payload["cognito:groups"] || [];
-      setUserGroups(groups);
+      const user = await fetchUserAttributes();
+      const groups = user['cognito:groups'] || [];
       
-      if (groups.includes("Students")) {
-        router.push("/student");
-      } else if (groups.includes("Teachers")) {
-        router.push("/teacher");
+      if (groups.includes('Student')) {
+        router.push('/student');
+      } else if (groups.includes('Teacher')) {
+        router.push('/teacher');
       }
     } catch (error) {
-      // User not logged in
+      console.error('Error checking user role:', error);
     }
-  }
-
-  if (userGroups.length > 0) return null; // Redirecting
+  };
 
   return (
-    <main className="login-container">
-      <h1>School Portal</h1>
-      <Authenticator>
-        {({ signOut }) => (
-          <div className="auth-wrapper">
-            <p>You're logged in!</p>
-            <button onClick={signOut}>Sign out</button>
+    <Authenticator>
+      {({ user }) => {
+        if (user) {
+          checkUserRole();
+          return <div>Loading...</div>;
+        }
+        
+        return (
+          <div className="login-container">
+            <h1>School Portal</h1>
+            <Authenticator.SignIn />
           </div>
-        )}
-      </Authenticator>
-    </main>
+        );
+      }}
+    </Authenticator>
   );
 }

@@ -1,46 +1,43 @@
+// app/student/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@/amplify/data/resource";
-import { Auth } from "aws-amplify";
+import { useRouter } from 'next/navigation';
+import { fetchUserAttributes } from 'aws-amplify/auth';
 
 const client = generateClient<Schema>();
 
 export default function StudentPage() {
-  const [students, setStudents] = useState<Array<Schema["Student"]["type"]>>([]);
+  const [student, setStudent] = useState<Schema["Student"]["type"]>();
+  const router = useRouter();
 
   useEffect(() => {
-    fetchStudents();
-    checkUserRole();
+    const loadStudentData = async () => {
+      const user = await fetchUserAttributes();
+      const { data: studentData } = await client.models.Student.list({
+        filter: { owner: { eq: user.sub } }
+      });
+      
+      if (studentData.length > 0) {
+        setStudent(studentData[0]);
+      }
+    };
+
+    loadStudentData();
   }, []);
-
-  async function checkUserRole() {
-    const session = await Auth.currentSession();
-    const groups = session.getIdToken().payload["cognito:groups"] || [];
-    if (!groups.includes("Students")) {
-      window.location.href = "/";
-    }
-  }
-
-  function fetchStudents() {
-    client.models.Student.observeQuery().subscribe({
-      next: ({ items }) => setStudents([...items]),
-    });
-  }
 
   return (
     <main>
       <h1>Student Portal</h1>
-      <div className="student-list">
-        {students.map((student) => (
-          <div key={student.id} className="student-card">
-            <h3>{student.studentName}</h3>
-            <p>Class: {student.studentClass}</p>
-            <p>Email: {student.studentEmail}</p>
-          </div>
-        ))}
-      </div>
+      {student && (
+        <div>
+          <h2>{student.name}</h2>
+          <p>Class: {student.class}</p>
+          <p>Email: {student.email}</p>
+        </div>
+      )}
+      <button onClick={() => router.push('/')}>Logout</button>
     </main>
   );
 }
