@@ -8,7 +8,16 @@ body {
     justify-content: center;
     align-items: center;
   }
+  .login-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    text-align: center;
+  }
   
+  [data-amplify-authenticator] {
+    --amplify-components-authenticator-max-width: 100%;
+  }
   main {
     display: flex;
     flex-direction: column;

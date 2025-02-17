@@ -1,20 +1,37 @@
-import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
+// amplify/backend/resource.ts
+import { type ClientSchema, a, defineData, defineAuth } from "@aws-amplify/backend";
+
+const auth = defineAuth({
+  loginWith: {
+    email: true,
+    // Add external providers if needed
+  },
+  groups: ['Student', 'Teacher'] // Add user groups
+});
 
 const schema = a.schema({
   Student: a
     .model({
-      studentName: a.string().required(),
-      studentEmail: a.string().required(),
-      studentClass: a.string().required(),
+      name: a.string().required(),
+      email: a.string().required(),
+      class: a.string().required(),
+      owner: a.string().required()
     })
-    .authorization((allow) => [allow.publicApiKey()]),
-    
+    .authorization((allow) => [
+      allow.owner(),
+      allow.groups(['Teacher']).to(['read'])
+    ]),
+
   Teacher: a
     .model({
-      teacherName: a.string().required(),
-      teacherEmail: a.string().required(),
+      name: a.string().required(),
+      email: a.string().required(),
+      owner: a.string().required()
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.owner(),
+      allow.groups(['Admin'])
+    ])
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -22,12 +39,14 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: "apiKey",
+    defaultAuthorizationMode: 'userPool',
     apiKeyAuthorizationMode: {
-      expiresInDays: 30,
-    },
-  },
+      expiresInDays: 30
+    }
+  }
 });
+
+export const authConfig = auth;
 
 /*== FRONTEND USAGE EXAMPLES =============================================
 // To use in your frontend components:
